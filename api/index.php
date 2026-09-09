@@ -23,6 +23,21 @@ if (!getenv('APP_DEBUG')) {
     $_SERVER['APP_DEBUG'] = 'true';
 }
 
+// Mark as Vercel environment and set HTTPS URL
+$_ENV['VERCEL'] = '1';
+$_SERVER['VERCEL'] = '1';
+
+// Detect the host from the request and force HTTPS
+$host = $_SERVER['HTTP_HOST'] ?? 'cgispekanbaru.vercel.app';
+$appUrl = 'https://' . $host;
+putenv("APP_URL={$appUrl}");
+$_ENV['APP_URL'] = $appUrl;
+$_SERVER['APP_URL'] = $appUrl;
+
+// Force HTTPS detection for URL generation
+$_SERVER['HTTPS'] = 'on';
+$_SERVER['SERVER_PORT'] = 443;
+
 if (!getenv('LOG_CHANNEL')) {
     putenv('LOG_CHANNEL=stderr');
     $_ENV['LOG_CHANNEL'] = 'stderr';
