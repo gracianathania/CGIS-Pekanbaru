@@ -5,6 +5,12 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 ini_set('display_errors', '0');
 
 // Default fallback environment variables for Vercel deployment
+if (!getenv('APP_NAME')) {
+    putenv('APP_NAME=CGIS Pekanbaru');
+    $_ENV['APP_NAME'] = 'CGIS Pekanbaru';
+    $_SERVER['APP_NAME'] = 'CGIS Pekanbaru';
+}
+
 if (!getenv('APP_KEY')) {
     putenv('APP_KEY=base64:0Arvn8i0I3CIWspqySzimxomDrkQyPgt5zDIEpCiaRY=');
     $_ENV['APP_KEY'] = 'base64:0Arvn8i0I3CIWspqySzimxomDrkQyPgt5zDIEpCiaRY=';
