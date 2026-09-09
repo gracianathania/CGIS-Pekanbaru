@@ -10,17 +10,21 @@ class KlinikController extends Controller
 {
     public function index()
     {
-        // Ambil semua data dari tabel klinik
-        $kliniks = Klinik::all();
+        try {
+            $kliniks = Klinik::all();
+            if ($kliniks->isEmpty()) {
+                $kliniks = $this->getKliniksFromJson();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Database connection failed, falling back to data_klinik.json: ' . $e->getMessage());
+            $kliniks = $this->getKliniksFromJson();
+        }
 
-        // Kirim data ke view
         return view('klinik.index', compact('kliniks'));
     }
 
-    // Menambah data baru ke tabel klinik
     public function store(Request $request)
     {
-        // Validasi input
         $request->validate([
             'nama_klinik' => 'required|string|max:255',
             'jam_operasional' => 'required|string|max:255',
@@ -29,9 +33,9 @@ class KlinikController extends Controller
             'longitude' => 'required|numeric',
             'latitude' => 'required|numeric',
         ]);
-        $lastNo = Klinik::max('data->No'); // Mengambil nilai terbesar dari kolom 'No' dalam JSON
+        $lastNo = Klinik::max('data->No');
         $nextNo = $lastNo ? $lastNo + 1 : 1;
-        // Format data sebagai JSON
+
         $data = [
             'No' => $nextNo,
             'Nama Klinik' => $request->nama_klinik,
@@ -43,36 +47,29 @@ class KlinikController extends Controller
             'Rating' => 3.5
         ];
 
-        // Simpan ke database
-        $klinik = new Klinik();
-        $klinik->data = $data;
-        $klinik->save();
+        try {
+            $klinik = new Klinik();
+            $klinik->data = $data;
+            $klinik->save();
+        } catch (\Throwable $e) {
+            Log::error('Could not save clinic to database: ' . $e->getMessage());
+        }
 
-        // Kembalikan response atau redirect
         return redirect()->back()->with('success', 'Data klinik berhasil ditambahkan!');
     }
 
-
-    // Mengedit data klinik berdasarkan ID
     public function update(Request $request, $id)
     {
-        // Validasi data yang diterima dari request
         $request->validate([
-            'data' => 'required|json', // Validasi format JSON
+            'data' => 'required|json',
         ]);
 
-        // Mencari data klinik berdasarkan ID
         $klinik = Klinik::find($id);
-
-        // Jika tidak ditemukan
         if (!$klinik) {
-            return response()->json([
-                'message' => 'Klinik tidak ditemukan'
-            ], 404);
+            return response()->json(['message' => 'Klinik tidak ditemukan'], 404);
         }
 
-        // Mengupdate data klinik
-        $klinik->data = json_decode($request->data, true); // Mengonversi JSON menjadi array
+        $klinik->data = json_decode($request->data, true);
         $klinik->save();
 
         return response()->json([
@@ -81,68 +78,74 @@ class KlinikController extends Controller
         ]);
     }
 
-    // Menghapus data klinik berdasarkan ID
     public function destroy($id)
     {
-        // Mencari data klinik berdasarkan ID
         $klinik = Klinik::find($id);
-
-        // Jika tidak ditemukan
         if (!$klinik) {
-            return response()->json([
-                'message' => 'Klinik tidak ditemukan'
-            ], 404);
+            return response()->json(['message' => 'Klinik tidak ditemukan'], 404);
         }
 
-        // Menghapus data klinik
         $klinik->delete();
 
-        return response()->json([
-            'message' => 'Data klinik berhasil dihapus'
-        ]);
+        return response()->json(['message' => 'Data klinik berhasil dihapus']);
     }
+
     public function getKlinikData()
     {
-        // Ambil semua data dari tabel klinik
-        $kliniks = Klinik::all();
+        try {
+            $kliniks = Klinik::all();
+            if ($kliniks->isEmpty()) {
+                $kliniks = $this->getKliniksFromJson();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Database connection failed in getKlinikData, falling back to data_klinik.json: ' . $e->getMessage());
+            $kliniks = $this->getKliniksFromJson();
+        }
 
-        // Transformasikan data JSON ke GeoJSON
         $features = [];
         foreach ($kliniks as $klinik) {
-            $json = preg_replace('/[[:^print:]]/', '', $klinik);
-            $data = json_decode($json, true); // Decode JSON dari database
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('JSON Decode Error: ' . json_last_error_msg());
-                continue;
-            }
+            $data = is_array($klinik->data) ? $klinik->data : (is_string($klinik->data) ? json_decode($klinik->data, true) : []);
+            if (!$data) continue;
 
             $features[] = [
                 "type" => "Feature",
                 "geometry" => [
                     "type" => "Point",
                     "coordinates" => [
-                        $data["data"]["Bujur"], // Longitude
-                        $data["data"]["Lintang"], // Latitude
+                        (float) ($data["Bujur"] ?? 0),
+                        (float) ($data["Lintang"] ?? 0),
                     ],
                 ],
                 "properties" => [
-                    "Nama_Klinik" => $data["data"]["Nama Klinik"],
-                    "Jam_Operasional" => $data["data"]["Jam Operasional"],
-                    "BPJS" => $data["data"]["BPJS/tidak BPJS"],
-                    "Harga" => $data["data"]["Harga"],
-                    "Rating" => $data["data"]["Rating"],
+                    "Nama_Klinik" => $data["Nama Klinik"] ?? '',
+                    "Jam_Operasional" => $data["Jam Operasional"] ?? '',
+                    "BPJS" => $data["BPJS/tidak BPJS"] ?? '',
+                    "Harga" => $data["Harga"] ?? '',
+                    "Rating" => $data["Rating"] ?? 4.0,
                 ],
             ];
         }
 
-        // Bungkus ke dalam FeatureCollection
-        $geoJSON = [
+        return response()->json([
             "type" => "FeatureCollection",
             "features" => $features,
-        ];
+        ]);
+    }
 
-        // Return dalam format JSON
-        return response()->json($geoJSON);
+    private function getKliniksFromJson()
+    {
+        $jsonPath = base_path('data_klinik.json');
+        if (!file_exists($jsonPath)) {
+            return collect();
+        }
+        $jsonContent = file_get_contents($jsonPath);
+        $arrayData = json_decode($jsonContent, true) ?? [];
+        
+        return collect(array_map(function ($item, $index) {
+            $obj = new \stdClass();
+            $obj->id = $index + 1;
+            $obj->data = $item;
+            return $obj;
+        }, $arrayData, array_keys($arrayData)));
     }
 }
