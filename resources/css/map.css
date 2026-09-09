@@ -1,0 +1,86 @@
+@import "../../node_modules/ol/ol.css";
+html,
+body {
+	margin: 0;
+	height: 100%;
+}
+
+#map {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 100%;
+	margin-top: 64px;
+	z-index: 1;
+}
+
+.ol-popup {
+	position: absolute;
+	background-color: white;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+	padding: 14px 18px;
+	border-radius: 16px;
+	border: 1px solid #e5e7eb;
+	bottom: 20px;
+	transform: translate(-50%, 0);
+	min-width: 260px;
+	max-width: 440px;
+	width: max-content;
+	pointer-events: none;
+	z-index: 100;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+}
+
+.ol-popup:after,
+.ol-popup:before {
+	top: 100%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.ol-popup:after {
+	border-top-color: white;
+	border-width: 10px;
+	left: 50%;
+	margin-left: -10px;
+}
+
+.ol-popup:before {
+	border-top-color: #e5e7eb;
+	border-width: 11px;
+	left: 50%;
+	margin-left: -11px;
+}
+
+.ol-popup-closer {
+	text-decoration: none;
+	position: absolute;
+	top: 2px;
+	right: 8px;
+}
+
+.ol-popup-closer:after {
+	content: "✖";
+}
+
+/* Styling untuk overlay checkbox */
+.overlay-container {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	background-color: rgba(255, 255, 255, 0.8);
+	padding: 10px;
+	border-radius: 5px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.overlay-container label {
+	display: block;
+	margin-bottom: 5px;
+}
+
