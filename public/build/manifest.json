@@ -1,0 +1,23 @@
+{
+  "public/images/dashboard.png": {
+    "file": "assets/dashboard-95a4cafc.png",
+    "src": "public/images/dashboard.png"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-444beea8.css",
+    "isEntry": true,
+    "src": "resources/css/app.css"
+  },
+  "resources/js/app.css": {
+    "file": "assets/app-cf979c17.css",
+    "src": "resources/js/app.css"
+  },
+  "resources/js/app.js": {
+    "css": [
+      "assets/app-cf979c17.css"
+    ],
+    "file": "assets/app-f137a84c.js",
+    "isEntry": true,
+    "src": "resources/js/app.js"
+  }
+}
